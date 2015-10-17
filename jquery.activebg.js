@@ -2,9 +2,14 @@
 	
 	function ActiveBg(element, userSettings) {
 		var defaultSettings = {
-				
+			kenburns: {
+				active: true,
+				time: 10000,
+				scaleStart: 1.2,
+				scaleEnd: 0.9
+			}
 		};
-		this.settings = $.extend({}, defaultSettings, userSettings);
+		this.settings = $.extend(true, {}, defaultSettings, userSettings);
 		this.element = element;
 		this.box = null;
 		this.wrapper = null;
@@ -30,9 +35,15 @@
 	
 	ActiveBg.prototype.resizeElement = function(boxSize) {
 		
+		
+		var kenburnsScale = 1;
+		if (this.settings.kenburns.active) {
+			var kenburnsScale = Math.max(this.settings.kenburns.scaleStart, this.settings.kenburns.scaleEnd);
+		}
+		
 		var elementSize = {
-			width: this.element.width(),
-			height: this.element.height()
+			width: this.element.width() * kenburnsScale,
+			height: this.element.height() * kenburnsScale
 		}
 		
 		var elementAspect = elementSize.width / elementSize.height;
@@ -47,13 +58,18 @@
 			scale = boxSize.width / elementSize.width;
 		}
 		
-		this.element.width(scale * elementSize.width);
-		this.element.height("auto");
+		var elementScaledSize = {
+			width: scale * elementSize.width,
+			height: scale * elementSize.height
+		};
 		
-		// Set element aspect.
+		this.element.width(elementScaledSize.width);
+		this.element.height(elementScaledSize.height);
+		
+		// Center image.
 		this.element.css({
-			"top" : ((boxSize.height - elementSize.height) / 2.0) + "px",
-			"left" : ((boxSize.width - elementSize.width) / 2.0) + "px",
+			"top" : ((boxSize.height - elementScaledSize.height) / 2.0) + "px",
+			"left" : ((boxSize.width - elementScaledSize.width) / 2.0) + "px",
 		});
 		
 	};

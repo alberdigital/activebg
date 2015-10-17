@@ -1,2 +1,2 @@
-# activebg
+# ActiveBg
 An active backgound jquery plugin.
