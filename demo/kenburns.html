@@ -35,9 +35,13 @@
 	<script src="../jquery.activebg.js"></script>
 	<script>
 		$(".demoimg").activeBg({
-			debug: {
-				drawCrop: true,
-				hideCropped: false
+			kenburns: {
+				active: true,
+				duration: 20000,
+				cropEnd: [
+				           		[0.0, 0.0], 
+				           		[0.8, 0.8]
+				          ]
 			}
 		});
 	</script>

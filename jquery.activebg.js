@@ -6,16 +6,16 @@
 				drawCrop: false,
 				hideCropped: true
 			},
+			crop: [
+			       		[0.4, 0.2],
+			       		[0.8, 0.8]
+			       ],
 			kenburns: {
-				active: true,
-				time: 10000,
-				cropStart: [
-				            	[0.2, 0.2],
-				            	[0.8, 0.8]
-				            ],
+				active: false,
+				duration: 10000,
 				cropEnd: [
-				           		[0.0, 0.5], 
-				           		[0.0, 0.5]
+				           		[0.0, 0.0], 
+				           		[0.8, 0.8]
 				          ]
 			}
 		};
@@ -26,25 +26,50 @@
 	}
 	
 	ActiveBg.prototype.init = function() {
+		var self = this;
+		
 		this.wrapper = this.findWrapper();
 		if (this.wrapper != null) {
 			this.boxElement();
-			var boxSize = this.measureBox(boxSize);
+			this.boxSize = this.measureBox();
 			this.element.addClass("activebg-element");
 			
 			//this.resizeElement(boxSize);
-			var elementSize = {
+			this.elementSize = {
 				width: this.element.width(),
 				height: this.element.height()
 			};
-			
-			var elementCoordsStart = this.calcElementCoords(boxSize, elementSize)
-			
-			this.element.css(elementCoordsStart.styles);
-			
-			this.drawCrop(elementCoordsStart);
+
+			this.setElementStyles(this.settings.crop);
+
+			if (this.settings.kenburns.active) {
+				$({normalizedTime: 0}).animate({normalizedTime: 1}, {
+					duration: self.settings.kenburns.duration,
+					easing: "linear",
+					step: function(normalizedTime) {
+						self.updateElementStyles(normalizedTime);
+					}
+				});
+			}
 		}
 		
+	};
+	
+	ActiveBg.prototype.updateElementStyles = function(normalizedTime) {
+		var cropStart = this.settings.crop;
+		var cropEnd = this.settings.kenburns.cropEnd;
+		var cropStep = [
+		                [cropStart[0][0] + normalizedTime * (cropEnd[0][0] - cropStart[0][0]), cropStart[0][1] + normalizedTime * (cropEnd[0][1] - cropStart[0][1])],
+		                [cropStart[1][0] + normalizedTime * (cropEnd[1][0] - cropStart[1][0]), cropStart[1][1] + normalizedTime * (cropEnd[1][1] - cropStart[1][1])]
+		                ];
+		
+		this.setElementStyles(cropStep);
+	};
+
+	ActiveBg.prototype.setElementStyles = function(crop) {
+		var elementCoords = this.calcElementCoords(this.boxSize, this.elementSize, crop)
+		this.element.css(elementCoords.styles);
+		this.drawCrop(elementCoords);
 	};
 	
 	ActiveBg.prototype.drawCrop = function(coords) {
@@ -73,8 +98,8 @@
 		this.wrapper.prepend(this.box);
 	};
 	
-	ActiveBg.prototype.calcElementCoords = function(boxSize, elementSize) {
-		var cropCoords = this.settings.kenburns.cropStart;
+	ActiveBg.prototype.calcElementCoords = function(boxSize, elementSize, crop) {
+		var cropCoords = crop;
 		
 		var cropNormSize = {
 			width: cropCoords[1][0] - cropCoords[0][0],
@@ -125,16 +150,6 @@
 			"left": (elementOffset.x + cropOffset.x) + "px",
 			"top": (elementOffset.y + cropOffset.y) + "px"
 		};
-		
-//		console.log("cropNormSize", cropNormSize);
-//		console.log("cropAspect", cropAspect);
-//		console.log("cropScaledSize", cropScaledSize);
-//		console.log("boxSize", boxSize);
-//		console.log("scale", scale);
-//		console.log("cropOffset", cropOffset);
-//		console.log("elementOffset", elementOffset);
-//		console.log("elementScaledSize", elementScaledSize);
-//		console.log("styles", styles);
 		
 		return {
 			scale: scale,
