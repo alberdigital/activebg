@@ -18,15 +18,17 @@
 		
 	<section>
 	
-		<article class="box">
+		<article class="wrapper">
 			<header>
 				<h2>Article title</h2>
 			</header>
 			<img class="demoimg" src="demoimg.jpg" alt="Proboscis monkey by Charlesjsharp"/>
-			<p><a href="https://commons.wikimedia.org/wiki/File:Proboscis_monkey_(Nasalis_larvatus)_female_Labuk_Bay.jpg#/media/File:Proboscis_monkey_(Nasalis_larvatus)_female_Labuk_Bay.jpg"
-			>Background: Proboscis monkey (Nasalis larvatus) female Labuk Bay" by Charlesjsharp - Own work, from Sharp Photography, 
-			sharpphotography. Licensed under CC BY-SA 4.0 via Commons</a></p>
+			<p>Some content</p>
 		</article>
+		
+		<p>Image: <a href="https://commons.wikimedia.org/wiki/File:Proboscis_monkey_(Nasalis_larvatus)_female_Labuk_Bay.jpg#/media/File:Proboscis_monkey_(Nasalis_larvatus)_female_Labuk_Bay.jpg"
+			>Proboscis monkey (Nasalis larvatus) female Labuk Bay" by Charlesjsharp - Own work, from Sharp Photography, 
+			sharpphotography. Licensed under CC BY-SA 4.0 via Commons</a></p>
 		
 	</section>
 
@@ -41,7 +43,12 @@
 
 	<script src="../jquery.activebg.js"></script>
 	<script>
-		$(".demoimg").activeBg();
+		$(".demoimg").activeBg({
+			debug: {
+				drawCrop: true,
+				hideCropped: false
+			}
+		});
 	</script>
 </body>
 

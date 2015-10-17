@@ -1,6 +1,10 @@
-.box {
-	width: 400px;
-	height: 700px;
+.wrapper {
+	width: 150px;
+	height: 250px;
 	position: relative;
 	margin: 0 auto;
+	color: #fff;
+	padding: 10px;
+	box-sizing: border-box;
+	border: 2px solid #000;
 }

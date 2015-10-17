@@ -1,4 +1,4 @@
-.activebg-wrapper {
+.activebg-box {
 	position: absolute;
 	top: 0;
 	left: 0;
@@ -10,4 +10,10 @@
 
 .activebg-element {
 	position: absolute;
+}
+
+.activebg-crop {
+	position: absolute;
+	border: 1px solid red;
+	box-sizing: border-box;
 }

@@ -2,100 +2,175 @@
 	
 	function ActiveBg(element, userSettings) {
 		var defaultSettings = {
+			debug : {
+				drawCrop: false,
+				hideCropped: true
+			},
 			kenburns: {
 				active: true,
 				time: 10000,
-				scaleStart: 1.2,
-				scaleEnd: 0.9
+				cropStart: [
+				            	[0.2, 0.2],
+				            	[0.8, 0.8]
+				            ],
+				cropEnd: [
+				           		[0.0, 0.5], 
+				           		[0.0, 0.5]
+				          ]
 			}
 		};
 		this.settings = $.extend(true, {}, defaultSettings, userSettings);
 		this.element = element;
-		this.box = null;
 		this.wrapper = null;
+		this.box = null;
 	}
 	
 	ActiveBg.prototype.init = function() {
-		this.box = this.findBox();
-		var boxSize = this.measureBox(boxSize);
-		this.wrapElement();
-		this.element.addClass("activebg-element");
-		this.resizeElement(boxSize);
-		
-		console.log("BoxSize", boxSize);
+		this.wrapper = this.findWrapper();
+		if (this.wrapper != null) {
+			this.boxElement();
+			var boxSize = this.measureBox(boxSize);
+			this.element.addClass("activebg-element");
+			
+			//this.resizeElement(boxSize);
+			var elementSize = {
+				width: this.element.width(),
+				height: this.element.height()
+			};
+			
+			var elementCoordsStart = this.calcElementCoords(boxSize, elementSize)
+			
+			this.element.css(elementCoordsStart.styles);
+			
+			this.drawCrop(elementCoordsStart);
+		}
 		
 	};
 	
-	ActiveBg.prototype.wrapElement = function() {
-		this.wrapper = $("<div />", { "class" : "activebg-wrapper" });
+	ActiveBg.prototype.drawCrop = function(coords) {
+		if (this.settings.debug.drawCrop) {
+			var crop = $("<div />", { 
+				"class": "activebg-crop",
+			});
+			this.box.append(crop);
+			
+			crop.css({
+				"width": coords.cropScaledSize.width + "px",
+				"height": coords.cropScaledSize.height + "px",
+				"left": coords.cropOffset.x + "px",
+				"top": coords.cropOffset.y + "px"
+			});
+		}
+	};
+	
+	ActiveBg.prototype.boxElement = function() {
+		this.box = $("<div />", { "class" : "activebg-box" });
+		if (!this.settings.debug.hideCropped) {
+			this.box.css("overflow", "visible");
+		}
 		this.element.remove();
-		this.wrapper.prepend(this.element);
-		this.box.prepend(this.wrapper);
+		this.box.prepend(this.element);
+		this.wrapper.prepend(this.box);
 	};
 	
-	ActiveBg.prototype.resizeElement = function(boxSize) {
+	ActiveBg.prototype.calcElementCoords = function(boxSize, elementSize) {
+		var cropCoords = this.settings.kenburns.cropStart;
 		
-		
-		var kenburnsScale = 1;
-		if (this.settings.kenburns.active) {
-			var kenburnsScale = Math.max(this.settings.kenburns.scaleStart, this.settings.kenburns.scaleEnd);
+		var cropNormSize = {
+			width: cropCoords[1][0] - cropCoords[0][0],
+			height: cropCoords[1][1] - cropCoords[0][1]
 		}
 		
-		var elementSize = {
-			width: this.element.width() * kenburnsScale,
-			height: this.element.height() * kenburnsScale
-		}
-		
-		var elementAspect = elementSize.width / elementSize.height;
-		var boxAspect = boxSize.width / boxSize.height;
-
-		var scale;
-		if (elementAspect > boxAspect) {
-			// Element more landscape than box: fix height.
-			scale = boxSize.height / elementSize.height;
-		} else {
-			// Element less landscape than box: fix width.
-			scale = boxSize.width / elementSize.width;
-		}
-		
-		var elementScaledSize = {
-			width: scale * elementSize.width,
-			height: scale * elementSize.height
+		var cropSize = {
+			width: cropNormSize.width * elementSize.width,
+			height: cropNormSize.height * elementSize.height
 		};
 		
-		this.element.width(elementScaledSize.width);
-		this.element.height(elementScaledSize.height);
+		var cropAspect = cropSize.width / cropSize.height;
+		var boxAspect = boxSize.width / boxSize.height;
+		
+		var scale;
+		if (cropAspect > boxAspect) {
+			// Crop is more landscape than box: fix height.
+			scale = boxSize.height / cropSize.height;
+		} else {
+			// Crop is less landscape than box: fix width.
+			scale = boxSize.width / cropSize.width;
+		}
+		
+		var cropScaledSize = {
+			width: scale * cropSize.width,
+			height: scale * cropSize.height
+		};
+		
+		var cropOffset = {
+			x : (boxSize.width - cropScaledSize.width) / 2.0,
+			y : (boxSize.height - cropScaledSize.height) / 2.0
+		};
+		
+		var elementOffset = {
+			x : -cropCoords[0][0] * elementSize.width * scale,
+			y : -cropCoords[0][1] * elementSize.height * scale,
+		};
+		
+		var elementScaledSize = {
+			width: elementSize.width * scale,
+			height: elementSize.height * scale
+		};
 		
 		// Center image.
-		this.element.css({
-			"top" : ((boxSize.height - elementScaledSize.height) / 2.0) + "px",
-			"left" : ((boxSize.width - elementScaledSize.width) / 2.0) + "px",
-		});
+		var styles = {
+			"width": elementScaledSize.width,
+			"height": elementScaledSize.height,
+			"left": (elementOffset.x + cropOffset.x) + "px",
+			"top": (elementOffset.y + cropOffset.y) + "px"
+		};
 		
+//		console.log("cropNormSize", cropNormSize);
+//		console.log("cropAspect", cropAspect);
+//		console.log("cropScaledSize", cropScaledSize);
+//		console.log("boxSize", boxSize);
+//		console.log("scale", scale);
+//		console.log("cropOffset", cropOffset);
+//		console.log("elementOffset", elementOffset);
+//		console.log("elementScaledSize", elementScaledSize);
+//		console.log("styles", styles);
+		
+		return {
+			scale: scale,
+			styles: styles,
+			cropSize: cropSize,
+			cropScaledSize: cropScaledSize,
+			cropOffset: cropOffset
+		};
 	};
 	
 	/**
 	 * Find a first parent item that is relative positioned.
 	 * @param element: The original element. 
 	 */
-	ActiveBg.prototype.findBox = function() {
-		var box = this.element;
+	ActiveBg.prototype.findWrapper = function() {
+		var wrapper = this.element.parent();
 		do {
-			box = box.parent();
-			console.log("box", box);
-			if (box.css("position") == "relative") {
+			if (wrapper.css("position") == "relative") {
 				break;
 			}
-		} while (!box.is(document));
+			wrapper = wrapper.parent();
+		} while (!wrapper.is(document));
 		
-		return box;
+		if (wrapper.is(document)) {
+			console.log("The element needs a relative positioned ancestor.")
+			return null;
+		}
+		
+		return wrapper;
 	};
 	
 	ActiveBg.prototype.measureBox = function() {
 		this.element.remove();
 		var boxSize = {
-			width: this.box.width(),
-			height: this.box.height()
+			width: this.box.outerWidth(),
+			height: this.box.outerHeight()
 		};
 		this.box.prepend(this.element);
 		return boxSize;
