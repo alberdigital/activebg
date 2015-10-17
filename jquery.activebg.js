@@ -7,7 +7,7 @@
 				hideCropped: true
 			},
 			crop: [
-			       		[0.4, 0.2],
+			       		[0.2, 0.2],
 			       		[0.8, 0.8]
 			       ],
 			kenburns: {
@@ -145,10 +145,21 @@
 		
 		// Center image.
 		var styles = {
+			/*
 			"width": elementScaledSize.width,
 			"height": elementScaledSize.height,
 			"left": (elementOffset.x + cropOffset.x) + "px",
 			"top": (elementOffset.y + cropOffset.y) + "px"
+			*/
+			"transform-origin": "0 0",
+			"transform": "" 
+				+ " translateX(" + (elementOffset.x + cropOffset.x) + "px)"
+				+ " translateY(" + (elementOffset.y + cropOffset.y) + "px)"
+				+ " scale(" + scale + ")"
+			
+//			"transform": "translateX(" + (elementOffset.x + cropOffset.x) + "px)"
+			
+			
 		};
 		
 		return {
