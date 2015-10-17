@@ -2,6 +2,7 @@
 	
 	function ActiveBg(element, userSettings) {
 		var defaultSettings = {
+			css3 : true,
 			debug : {
 				drawCrop: false,
 				hideCropped: true
@@ -143,24 +144,22 @@
 			height: elementSize.height * scale
 		};
 		
-		// Center image.
-		var styles = {
-			/*
-			"width": elementScaledSize.width,
-			"height": elementScaledSize.height,
-			"left": (elementOffset.x + cropOffset.x) + "px",
-			"top": (elementOffset.y + cropOffset.y) + "px"
-			*/
-			"transform-origin": "0 0",
-			"transform": "" 
-				+ " translateX(" + (elementOffset.x + cropOffset.x) + "px)"
-				+ " translateY(" + (elementOffset.y + cropOffset.y) + "px)"
-				+ " scale(" + scale + ")"
-			
-//			"transform": "translateX(" + (elementOffset.x + cropOffset.x) + "px)"
-			
-			
-		};
+
+		var styles = this.settings.css3 ? 
+			{
+				"transform-origin": "0 0",
+				"transform": "" 
+					+ " translateX(" + (elementOffset.x + cropOffset.x) + "px)"
+					+ " translateY(" + (elementOffset.y + cropOffset.y) + "px)"
+					+ " scale(" + scale + ")"
+			}
+			:{
+				
+				"width": elementScaledSize.width,
+				"height": elementScaledSize.height,
+				"left": (elementOffset.x + cropOffset.x) + "px",
+				"top": (elementOffset.y + cropOffset.y) + "px"
+			};
 		
 		return {
 			scale: scale,
