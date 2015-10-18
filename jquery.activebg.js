@@ -14,6 +14,7 @@
 			kenburns: {
 				active: false,
 				duration: 10000,
+				easing: "swing",
 				cropEnd: [
 				           		[0.0, 0.0], 
 				           		[0.8, 0.8]
@@ -46,7 +47,7 @@
 			if (this.settings.kenburns.active) {
 				$({normalizedTime: 0}).animate({normalizedTime: 1}, {
 					duration: self.settings.kenburns.duration,
-					easing: "linear",
+					easing: self.settings.kenburns.easing,
 					step: function(normalizedTime) {
 						self.updateElementStyles(normalizedTime);
 					}
