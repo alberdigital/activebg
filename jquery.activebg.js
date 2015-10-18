@@ -202,8 +202,10 @@
 	};
 	
 	$.fn.activeBg = function(userSettings) {
-		var activeBg = new ActiveBg($(this), userSettings);
-		activeBg.init();
+		$(this).each(function() {
+			var activeBg = new ActiveBg($(this), userSettings);
+			activeBg.init();
+		});			
 	}
 	
 })(jQuery);
