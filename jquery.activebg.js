@@ -1,9 +1,11 @@
 (function($) {
 	
+	var windowIsLoaded = false;
+	
 	function ActiveBg(element, userSettings) {
 		var defaultSettings = {
-			css3 : true,
-			debug : {
+			css3: true,
+			debug: {
 				drawCrop: false,
 				hideCropped: true
 			},
@@ -12,6 +14,7 @@
 			       		[0.8, 0.8]
 			       ],
 			kenburns: {
+				waitForLoad: true,
 				active: false,
 				duration: 10000,
 				easing: "swing",
@@ -34,6 +37,11 @@
 		if (this.wrapper != null) {
 			this.boxElement();
 			this.element.addClass("activebg-element");
+
+			this.elementSize = {
+				width: this.element.width(),
+				height: this.element.height()
+			};
 			
 			this.resize();
 			
@@ -46,18 +54,32 @@
 	
 	ActiveBg.prototype.resize = function() {
 		var self = this;
-		this.boxSize = this.measureBox();
 		
-		//this.resizeElement(boxSize);
-		this.elementSize = {
-			width: this.element.width(),
-			height: this.element.height()
-		};
+		this.boxSize = this.measureBox();
 
 		this.setElementStyles(this.settings.crop);
+		
+		// Wait until window load to start the effect.
+		if (this.settings.kenburns.waitForLoad && !windowIsLoaded) {
+			$(window).load(function() {
+				self.startKenburns();
+			});
+		} else {
+			this.startKenburns();
+		}
 
+	};
+
+	ActiveBg.prototype.startKenburns = function() {
+		var self = this;
+		
 		if (this.settings.kenburns.active) {
-			$({normalizedTime: 0}).animate({normalizedTime: 1}, {
+			if (typeof(this.normTimeObject) != "undefined") {
+				this.normTimeObject.stop();
+			}
+			this.normTimeObject = $({normalizedTime: 0});
+
+			this.normTimeObject.animate({normalizedTime: 1}, {
 				duration: self.settings.kenburns.duration,
 				easing: self.settings.kenburns.easing,
 				step: function(normalizedTime) {
@@ -134,7 +156,6 @@
 			// Crop is less landscape than box: fix width.
 			scale = boxSize.width / cropSize.width;
 		}
-		
 		var cropScaledSize = {
 			width: scale * cropSize.width,
 			height: scale * cropSize.height
@@ -211,6 +232,11 @@
 		this.box.prepend(this.element);
 		return boxSize;
 	};
+	
+	
+	$(window).load(function() {
+	    windowIsLoaded = true;
+	});
 	
 	$.fn.activeBg = function(userSettings) {
 		$(this).each(function() {
