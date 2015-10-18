@@ -38,18 +38,29 @@
 			this.boxElement();
 			this.element.addClass("activebg-element");
 
-			this.elementSize = {
-				width: this.element.width(),
-				height: this.element.height()
-			};
-			
-			this.resize();
-			
-			$(window).on("resize", function(e) {
+			this.element.abOnImageAvailable(function() {
+				self.elementSize = {
+					width: self.element.width(),
+					height: self.element.height()
+				};
+				
 				self.resize();
+				
+				$(window).on("resize", function(e) {
+					self.resize();
+				});
 			});
+			
 		}
 		
+	};
+	
+	$.fn.abOnImageAvailable = function(callback) {
+		if ($(this).width() == 0) {
+			$(this).on("load", callback);
+		} else {
+			callback();
+		}
 	};
 	
 	ActiveBg.prototype.resize = function() {
@@ -180,6 +191,10 @@
 		var styles = this.settings.css3 ? 
 			{
 				"transform-origin": "0 0",
+				"webkit-transform": "" 
+					+ " translateX(" + (elementOffset.x + cropOffset.x) + "px)"
+					+ " translateY(" + (elementOffset.y + cropOffset.y) + "px)"
+					+ " scale(" + scale + ")",
 				"transform": "" 
 					+ " translateX(" + (elementOffset.x + cropOffset.x) + "px)"
 					+ " translateY(" + (elementOffset.y + cropOffset.y) + "px)"
