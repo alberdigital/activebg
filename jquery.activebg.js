@@ -33,28 +33,38 @@
 		this.wrapper = this.findWrapper();
 		if (this.wrapper != null) {
 			this.boxElement();
-			this.boxSize = this.measureBox();
 			this.element.addClass("activebg-element");
 			
-			//this.resizeElement(boxSize);
-			this.elementSize = {
-				width: this.element.width(),
-				height: this.element.height()
-			};
-
-			this.setElementStyles(this.settings.crop);
-
-			if (this.settings.kenburns.active) {
-				$({normalizedTime: 0}).animate({normalizedTime: 1}, {
-					duration: self.settings.kenburns.duration,
-					easing: self.settings.kenburns.easing,
-					step: function(normalizedTime) {
-						self.updateElementStyles(normalizedTime);
-					}
-				});
-			}
+			this.resize();
+			
+			$(window).on("resize", function(e) {
+				self.resize();
+			});
 		}
 		
+	};
+	
+	ActiveBg.prototype.resize = function() {
+		var self = this;
+		this.boxSize = this.measureBox();
+		
+		//this.resizeElement(boxSize);
+		this.elementSize = {
+			width: this.element.width(),
+			height: this.element.height()
+		};
+
+		this.setElementStyles(this.settings.crop);
+
+		if (this.settings.kenburns.active) {
+			$({normalizedTime: 0}).animate({normalizedTime: 1}, {
+				duration: self.settings.kenburns.duration,
+				easing: self.settings.kenburns.easing,
+				step: function(normalizedTime) {
+					self.updateElementStyles(normalizedTime);
+				}
+			});
+		}
 	};
 	
 	ActiveBg.prototype.updateElementStyles = function(normalizedTime) {
