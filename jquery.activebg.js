@@ -4,7 +4,7 @@
 	
 	function ActiveBg(element, userSettings) {
 		var defaultSettings = {
-			css3: true,
+			mode: "canvas", // css, css3, canvas
 			debug: {
 				drawCrop: false,
 				hideCropped: true
@@ -34,20 +34,45 @@
 		var self = this;
 		
 		this.wrapper = this.findWrapper();
+		
 		if (this.wrapper != null) {
-			this.boxElement();
+		
 			this.element.addClass("activebg-element");
+			this.boxElement();
+
+			switch (self.settings.mode)
+			{
+			case "css":
+			case "css3":
+				
+				break;
+				
+			case "canvas":
+				this.createCanvas();
+				break;
+			}
 
 			this.element.abOnImageAvailable(function() {
+				
+				// Calculate the size of the original element.
 				self.elementSize = {
 					width: self.element.width(),
 					height: self.element.height()
 				};
 				
-				self.resize();
+				self.boxSize = self.measureBox();
 				
+				// In canvas mode, we don't need the original image.
+				if (self.settings.mode == "canvas") {
+					self.element.remove();
+				}
+				
+				// Do the crop.
+				self.initCrop();
+				
+				// Re do the crop on window resize.
 				$(window).on("resize", function(e) {
-					self.resize();
+					self.initCrop();
 				});
 			});
 			
@@ -63,24 +88,14 @@
 		}
 	};
 	
-	ActiveBg.prototype.resize = function() {
-		var self = this;
-		
-		this.boxSize = this.measureBox();
-
-		this.setElementStyles(this.settings.crop);
-		
-		// Wait until window load to start the effect.
-		if (this.settings.kenburns.waitForLoad && !windowIsLoaded) {
-			$(window).load(function() {
-				self.startKenburns();
-			});
-		} else {
-			this.startKenburns();
-		}
-
+	/**
+	 * If kenburns effect is off, just applies the crop. If kenburns is on, it also resets the animation.
+	 */
+	ActiveBg.prototype.initCrop = function() {
+		this.applyCrop(this.settings.crop);
+		this.startKenburns();
 	};
-
+	
 	ActiveBg.prototype.startKenburns = function() {
 		var self = this;
 		
@@ -94,13 +109,13 @@
 				duration: self.settings.kenburns.duration,
 				easing: self.settings.kenburns.easing,
 				step: function(normalizedTime) {
-					self.updateElementStyles(normalizedTime);
+					self.updateResize(normalizedTime);
 				}
 			});
 		}
 	};
 	
-	ActiveBg.prototype.updateElementStyles = function(normalizedTime) {
+	ActiveBg.prototype.updateResize = function(normalizedTime) {
 		var cropStart = this.settings.crop;
 		var cropEnd = this.settings.kenburns.cropEnd;
 		var cropStep = [
@@ -108,13 +123,25 @@
 		                [cropStart[1][0] + normalizedTime * (cropEnd[1][0] - cropStart[1][0]), cropStart[1][1] + normalizedTime * (cropEnd[1][1] - cropStart[1][1])]
 		                ];
 		
-		this.setElementStyles(cropStep);
+		this.applyCrop(cropStep);
 	};
 
-	ActiveBg.prototype.setElementStyles = function(crop) {
-		var elementCoords = this.calcElementCoords(this.boxSize, this.elementSize, crop)
-		this.element.css(elementCoords.styles);
-		this.drawCrop(elementCoords);
+	
+	ActiveBg.prototype.boxElement = function() {
+		this.box = $("<div />", { "class" : "activebg-box" });
+		if (!this.settings.debug.hideCropped) {
+			this.box.css("overflow", "visible");
+		}
+		this.element.remove();
+		this.box.prepend(this.element);
+		this.wrapper.prepend(this.box);
+	};
+	
+	ActiveBg.prototype.createCanvas = function() {
+		this.canvas = $("<canvas />", { "class" : "activebg-canvas" });
+		this.canvas.attr("width", this.box.width());
+		this.canvas.attr("height", this.box.height());
+		this.box.prepend(this.canvas);
 	};
 	
 	ActiveBg.prototype.drawCrop = function(coords) {
@@ -133,22 +160,64 @@
 		}
 	};
 	
-	ActiveBg.prototype.boxElement = function() {
-		this.box = $("<div />", { "class" : "activebg-box" });
-		if (!this.settings.debug.hideCropped) {
-			this.box.css("overflow", "visible");
+	ActiveBg.prototype.applyCrop = function(crop) {
+		var coords = this.calcElementCoords(this.boxSize, this.elementSize, crop)
+		
+		switch (this.settings.mode) {
+		case "css":
+			this.element.css({
+				
+				"width": coords.elementScaledSize.width,
+				"height": coords.elementScaledSize.height,
+				"left": (coords.elementOffset.x + coords.cropOffset.x) + "px",
+				"top": (coords.elementOffset.y + coords.cropOffset.y) + "px"
+			});
+
+			break;
+		
+		case "css3":
+			this.element.css({
+				"transform-origin": "0 0",
+				"webkit-transform": "" 
+					+ " translateX(" + (coords.elementOffset.x + coords.cropOffset.x) + "px)"
+					+ " translateY(" + (coords.elementOffset.y + coords.cropOffset.y) + "px)"
+					+ " scale(" + coords.scale + ")",
+					"transform": "" 
+						+ " translateX(" + (coords.elementOffset.x + coords.cropOffset.x) + "px)"
+						+ " translateY(" + (coords.elementOffset.y + coords.cropOffset.y) + "px)"
+						+ " scale(" + coords.scale + ")"
+			})
+			break;
+			
+		case "canvas":
+			var ctx = this.canvas.get(0).getContext("2d");
+			ctx.drawImage(
+				this.element.get(0),
+				coords.cropCoords[0][0],
+				coords.cropCoords[0][1],
+				coords.cropSize.width,
+				coords.cropSize.height,
+				coords.cropOffset.x,
+				coords.cropOffset.y,
+				coords.cropScaledSize.width,
+				coords.cropScaledSize.height
+			);
+			break;
 		}
-		this.element.remove();
-		this.box.prepend(this.element);
-		this.wrapper.prepend(this.box);
+		
+		this.drawCrop(coords);
 	};
 	
-	ActiveBg.prototype.calcElementCoords = function(boxSize, elementSize, crop) {
-		var cropCoords = crop;
-		
+	ActiveBg.prototype.calcElementCoords = function(boxSize, elementSize, cropNormCoords) {
+	
+		var cropCoords = [
+		                  [cropNormCoords[0][0] * elementSize.width, cropNormCoords[0][1] * elementSize.height],
+		                  [cropNormCoords[1][0] * elementSize.width, cropNormCoords[1][1] * elementSize.heihgt]
+		                  ];
+
 		var cropNormSize = {
-			width: cropCoords[1][0] - cropCoords[0][0],
-			height: cropCoords[1][1] - cropCoords[0][1]
+			width: cropNormCoords[1][0] - cropNormCoords[0][0],
+			height: cropNormCoords[1][1] - cropNormCoords[0][1]
 		}
 		
 		var cropSize = {
@@ -178,8 +247,8 @@
 		};
 		
 		var elementOffset = {
-			x : -cropCoords[0][0] * elementSize.width * scale,
-			y : -cropCoords[0][1] * elementSize.height * scale,
+			x : -cropNormCoords[0][0] * elementSize.width * scale,
+			y : -cropNormCoords[0][1] * elementSize.height * scale,
 		};
 		
 		var elementScaledSize = {
@@ -187,33 +256,19 @@
 			height: elementSize.height * scale
 		};
 		
-
-		var styles = this.settings.css3 ? 
-			{
-				"transform-origin": "0 0",
-				"webkit-transform": "" 
-					+ " translateX(" + (elementOffset.x + cropOffset.x) + "px)"
-					+ " translateY(" + (elementOffset.y + cropOffset.y) + "px)"
-					+ " scale(" + scale + ")",
-				"transform": "" 
-					+ " translateX(" + (elementOffset.x + cropOffset.x) + "px)"
-					+ " translateY(" + (elementOffset.y + cropOffset.y) + "px)"
-					+ " scale(" + scale + ")"
-			}
-			:{
-				
-				"width": elementScaledSize.width,
-				"height": elementScaledSize.height,
-				"left": (elementOffset.x + cropOffset.x) + "px",
-				"top": (elementOffset.y + cropOffset.y) + "px"
-			};
 		
 		return {
 			scale: scale,
-			styles: styles,
+			elementSize: elementSize,
+			cropNormSize: cropNormSize,
 			cropSize: cropSize,
 			cropScaledSize: cropScaledSize,
-			cropOffset: cropOffset
+			cropCoords: cropCoords,
+			cropNormCoords: cropNormCoords,
+			cropCoords: cropCoords,
+			cropOffset: cropOffset,
+			elementScaledSize: elementScaledSize,
+			elementOffset: elementOffset
 		};
 	};
 	
@@ -239,12 +294,12 @@
 	};
 	
 	ActiveBg.prototype.measureBox = function() {
-		this.element.remove();
+//		this.element.remove();
 		var boxSize = {
 			width: this.box.outerWidth(),
 			height: this.box.outerHeight()
 		};
-		this.box.prepend(this.element);
+//		this.box.prepend(this.element);
 		return boxSize;
 	};
 	
