@@ -60,8 +60,6 @@
 					height: self.element.height()
 				};
 				
-				self.boxSize = self.measureBox();
-				
 				// In canvas mode, we don't need the original image.
 				if (self.settings.mode == "canvas") {
 					self.element.remove();
@@ -92,6 +90,8 @@
 	 * If kenburns effect is off, just applies the crop. If kenburns is on, it also resets the animation.
 	 */
 	ActiveBg.prototype.initCrop = function() {
+		this.updateCanvasSize();
+
 		this.applyCrop(this.settings.crop);
 		this.startKenburns();
 	};
@@ -144,6 +144,13 @@
 		this.box.prepend(this.canvas);
 	};
 	
+	ActiveBg.prototype.updateCanvasSize = function() {
+		if (typeof(this.canvas) != "undefined") {
+			this.canvas.attr("width", this.box.outerWidth());
+			this.canvas.attr("height", this.box.outerHeight());
+		}
+	}
+	
 	ActiveBg.prototype.drawCrop = function(coords) {
 		if (this.settings.debug.drawCrop) {
 			var crop = $("<div />", { 
@@ -161,7 +168,10 @@
 	};
 	
 	ActiveBg.prototype.applyCrop = function(crop) {
-		var coords = this.calcElementCoords(this.boxSize, this.elementSize, crop)
+		var coords = this.calcElementCoords({
+			width: this.box.outerWidth(),
+			height: this.box.outerHeight()
+		}, this.elementSize, crop);
 		
 		switch (this.settings.mode) {
 		case "css":
@@ -292,17 +302,6 @@
 		
 		return wrapper;
 	};
-	
-	ActiveBg.prototype.measureBox = function() {
-//		this.element.remove();
-		var boxSize = {
-			width: this.box.outerWidth(),
-			height: this.box.outerHeight()
-		};
-//		this.box.prepend(this.element);
-		return boxSize;
-	};
-	
 	
 	$(window).load(function() {
 	    windowIsLoaded = true;
