@@ -5,6 +5,7 @@
 	function ActiveBg(element, userSettings) {
 		var defaultSettings = {
 			mode: "canvas", // css, css3, canvas
+			fadeInTime: 1000,
 			debug: {
 				drawCrop: false,
 				hideCropped: true
@@ -39,26 +40,27 @@
 		
 			this.element.addClass("activebg-element");
 			this.boxElement();
-
-			switch (self.settings.mode)
-			{
-			case "css":
-			case "css3":
-				
-				break;
-				
-			case "canvas":
-				this.createCanvas();
-				break;
-			}
+			
+			// Hide element until loaded.
+			this.element.hide();
 
 			this.onImageAvailable(this.element, function() {
+				switch (self.settings.mode)
+				{
+				case "css":
+				case "css3":
+					self.element.fadeIn(self.settings.fadeInTime);
+					break;
+					
+				case "canvas":
+					self.createCanvas();
+					self.canvas.hide();
+					self.canvas.fadeIn(self.settings.fadeInTime);
+					break;
+				}
 				
 				// Calculate the size of the original element.
-				self.elementSize = {
-					width: self.element.width(),
-					height: self.element.height()
-				};
+				self.measureImage();
 				
 				// In canvas mode, we don't need the original image.
 				if (self.settings.mode == "canvas") {
@@ -77,6 +79,13 @@
 		}
 		
 	};
+	
+	ActiveBg.prototype.measureImage = function() {
+		this.elementSize = {
+			width: this.element.width(),
+			height: this.element.height()
+		};
+	}
 	
 	ActiveBg.prototype.onImageAvailable = function(jqImage, callback) {
 		var image = jqImage.is("img") ? jqImage.get(0) : null;
