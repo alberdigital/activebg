@@ -52,7 +52,7 @@
 				break;
 			}
 
-			this.element.abOnImageAvailable(function() {
+			this.onImageAvailable(this.element, function() {
 				
 				// Calculate the size of the original element.
 				self.elementSize = {
@@ -78,12 +78,39 @@
 		
 	};
 	
-	$.fn.abOnImageAvailable = function(callback) {
-		if ($(this).width() == 0) {
-			$(this).on("load", callback);
-		} else {
-			callback();
+	ActiveBg.prototype.onImageAvailable = function(jqImage, callback) {
+		var image = jqImage.is("img") ? jqImage.get(0) : null;
+		
+		if (image != null) {
+			if (this.imageReady(image)) {
+				callback();
+			} else {
+				image.onload = callback;
+			}
 		}
+	};
+	
+	/**
+	 * Detects if an image is loaded.
+	 * Credit: https://stereochro.me/ideas/detecting-broken-images-js
+	 */
+	ActiveBg.prototype.imageReady = function(img) {
+		// During the onload event, IE correctly identifies any images that
+	    // weren’t downloaded as not complete. Others should too. Gecko-based
+	    // browsers act like NS4 in that they report this incorrectly.
+		if (!img.complete) {
+	        return false;
+	    }
+
+	    // However, they do have two very useful properties: naturalWidth and
+	    // naturalHeight. These give the true size of the image. If it failed
+	    // to load, either of these should be zero.
+	    if (typeof img.naturalWidth !== "undefined" && img.naturalWidth === 0) {
+	        return false;
+	    }
+	    
+	    // No other way of checking: assume it's ok.
+	    return true;
 	};
 	
 	/**
@@ -172,7 +199,7 @@
 			width: this.box.outerWidth(),
 			height: this.box.outerHeight()
 		}, this.elementSize, crop);
-		
+
 		switch (this.settings.mode) {
 		case "css":
 			this.element.css({
